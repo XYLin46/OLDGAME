@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const {group,hasMoves,remove,points}=require('./logic.js');
+const b=[['A','B','C'],['A','B','D'],['E','B','E']];
+assert.equal(group(b,0,0).length,2);
+assert.equal(group([['A','B'],['B','A']],0,0).length,1,'diagonal cells are not connected');
+const after=remove(b,group(b,0,1));
+assert.deepEqual(after,[['A','C',null],['A','D',null],['E','E',null]],'empty columns slide left');
+assert.deepEqual(remove(b,group(b,0,0)),[[null,'B','C'],[null,'B','D'],['E','B','E']],'gravity fills bottom');
+assert.deepEqual(b,[['A','B','C'],['A','B','D'],['E','B','E']],'original board preserved for undo');
+assert.equal(hasMoves([['A','B'],['C','D']]),false);
+assert.equal(hasMoves(after),true);
+assert.deepEqual(remove([['A','A']],[[0,0],[0,1]]),[[null,null]]);
+assert.equal(hasMoves([[null,null]]),false);
+assert.equal(points(2),0);assert.equal(points(5),9);
+console.log('PASS: connected groups, diagonals, gravity, column collapse, undo snapshot, end detection, full clear, scoring');
