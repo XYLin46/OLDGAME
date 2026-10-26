@@ -17,5 +17,20 @@
   function draw(state,count){if(state.stock.length){for(let i=0;i<count&&state.stock.length;i++){const c=state.stock.pop();c.up=true;state.waste.push(c)}}else if(state.waste.length){while(state.waste.length){const c=state.waste.pop();c.up=false;state.stock.push(c)}state.score=Math.max(0,state.score-20)}else return false;state.moves++;return true}
   function won(state){return state.foundations.every(p=>p.length===13)}
   function topSources(state){const sources=[];if(state.waste.length)sources.push({kind:'waste',col:0,index:state.waste.length-1});state.tableau.forEach((p,col)=>{if(p.length&&p.at(-1).up)sources.push({kind:'tableau',col,index:p.length-1})});return sources}
-  const api={suits,red,deal,pile,moving,canMove,move,draw,won,topSources};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Solitaire=api;
+  function canComplete(state){return !won(state)&&state.stock.length===0&&state.tableau.every(p=>p.every(c=>c.up))}
+  function complete(state){
+    if(!canComplete(state))return null;
+    const next=JSON.parse(JSON.stringify(state)),seen=new Set();
+    // Finish through legal foundation moves, recycling the waste if necessary.
+    for(let step=0;step<5000;step++){
+      if(won(next))return next;
+      const key=JSON.stringify([next.stock.map(c=>c.id),next.waste.map(c=>c.id),next.tableau.map(p=>p.map(c=>c.id)),next.foundations.map(p=>p.length)]);
+      if(seen.has(key))return null;seen.add(key);
+      const from=topSources(next).find(ref=>{const c=moving(next,ref)[0];return canMove(next,ref,{kind:'foundation',col:c.suit})});
+      if(from){const card=moving(next,from)[0];move(next,from,{kind:'foundation',col:card.suit})}
+      else if(!draw(next,1))return null;
+    }
+    return null;
+  }
+  const api={suits,red,deal,pile,moving,canMove,move,draw,won,topSources,canComplete,complete};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Solitaire=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
